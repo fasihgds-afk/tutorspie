@@ -1,0 +1,13 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "../vendor/shadcn-tailwind-4.13.0.css";
+@theme inline {
+  --color-background:var(--background);
+  --color-foreground:var(--foreground);
+  --color-border:var(--border);
+  --color-ring:var(--ring);
+  --color-primary:var(--primary);
+  --color-primary-foreground:var(--primary-foreground);
+}
+:root{--background:#fff;--foreground:#161c2d;--border:#dbe2f1;--ring:#2f55d4;--primary:#2f55d4;--primary-foreground:#fff}
+[data-slot="dialog-overlay"]{z-index:1090}
