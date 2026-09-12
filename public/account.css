@@ -10,12 +10,39 @@
   --tp-footer:#17121f;
 }
 .app-page{min-height:100dvh;background:#fff;color:var(--tp-ink);font-family:Nunito,Poppins,sans-serif;display:flex;flex-direction:column}
-.site-app-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 40px;background:#fff;border-bottom:0;position:sticky;top:0;z-index:30;min-height:66px;flex-wrap:wrap}
+.site-app-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 40px;background:#fff;border-bottom:0;position:sticky;top:0;z-index:30;min-height:66px;flex-wrap:nowrap}
+
+.header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 16px;
+}
+
 .site-app-nav{display:flex;gap:4px 16px;align-items:center;flex:1;justify-content:center;flex-wrap:wrap}
 .site-app-nav a{color:#3a3148;font-weight:800;font-size:14px;text-decoration:none}
 .site-app-nav a:hover,.site-app-nav a.active{color:var(--tp-purple)}
 .app-logo{display:inline-flex;align-items:center;line-height:0}.app-logo img{height:42px;width:auto;display:block}
 .site-app-header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* Mobile menu button - hidden on desktop */
+.mobile-menu-button {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--tp-purple);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.mobile-menu-button:hover {
+  background-color: #f3f4f6;
+}
 .header-phone{display:inline-flex;align-items:center;gap:7px;border:1px solid #c5b6e0;border-radius:999px;padding:8px 14px;color:var(--tp-purple);font-weight:700;text-decoration:none;background:#fff;font-size:13px}
 .btn-outline-brand,.btn-solid-brand{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:4px;padding:9px 16px;font-weight:700;font-size:14px;text-decoration:none;cursor:pointer;border:1px solid transparent}
 .btn-outline-brand{background:#fff;border-color:#9ca3af;color:#374151;border-radius:999px;padding:8px 16px}
@@ -227,18 +254,192 @@ a.forgot-link{text-decoration:none;display:inline-block;justify-self:end}
   .trust-bar{grid-template-columns:1fr 1fr}
   .dash-body{grid-template-columns:1fr;padding:22px 16px 40px;gap:24px}
   .dash-nav-inner,.site-app-header{padding-left:16px;padding-right:16px}
-  .header-phone{display:none}
-  .site-app-nav{order:3;width:100%;justify-content:flex-start;padding-bottom:6px}
+  
+  /* Updated mobile header styles */
+  .site-app-header {
+    position: relative;
+  }
+  
+  .header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .desktop-nav {
+    display: none;
+  }
+  
+  .desktop-actions {
+    display: none;
+  }
+  
+  .mobile-menu-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--tp-purple);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+  }
+  
+  .mobile-menu-button:hover {
+    background-color: #f3f4f6;
+  }
+  
+  .mobile-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+  }
+  
+  .mobile-menu {
+    position: fixed;
+    top: 66px;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+    z-index: 50;
+    max-height: calc(100vh - 66px);
+    overflow-y: auto;
+  }
+  
+  .mobile-menu-open {
+    transform: translateY(0);
+  }
+  
+  .mobile-nav {
+    padding: 16px 0;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .mobile-nav-link {
+    display: block;
+    padding: 12px 20px;
+    color: #3a3148;
+    font-weight: 800;
+    font-size: 16px;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+  
+  .mobile-nav-link:hover,
+  .mobile-nav-link.active {
+    background-color: #f8f9fa;
+    color: var(--tp-purple);
+  }
+  
+  .mobile-actions {
+    padding: 20px;
+  }
+  
+  .mobile-phone {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    border: 1px solid #c5b6e0;
+    border-radius: 8px;
+    color: var(--tp-purple);
+    font-weight: 700;
+    text-decoration: none;
+    background: #fff;
+    font-size: 14px;
+    justify-content: center;
+    transition: background-color 0.2s ease;
+  }
+  
+  .mobile-phone:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .mobile-auth-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .mobile-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 16px;
+    font-size: 16px;
+    border-radius: 8px;
+  }
+  
   .contact-cards{grid-template-columns:1fr}
 }
+
+@media(min-width:961px){
+  .mobile-menu-button {
+    display: none;
+  }
+  
+  .mobile-menu {
+    display: none;
+  }
+  
+  .desktop-nav {
+    display: flex;
+  }
+  
+  .desktop-actions {
+    display: flex;
+  }
+  
+  .header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .phone-text {
+    display: inline;
+  }
+  
+  .btn-text {
+    display: inline;
+  }
+}
+
 @media(max-width:640px){
   .trust-bar{grid-template-columns:1fr}
   .order-summary{grid-template-columns:1fr}
-  .site-app-header-actions .btn-outline-brand{display:none}
   .app-logo img{height:34px}
   .dash-welcome h1{font-size:22px}
   .orders-toolbar{align-items:stretch}
   .search-wrap{width:100%}
+  
+  /* Additional mobile styles for smaller screens */
+  .mobile-nav-link {
+    padding: 14px 20px;
+    font-size: 18px;
+  }
+  
+  .mobile-btn {
+    padding: 14px 16px;
+    font-size: 16px;
+  }
+  
+  .mobile-phone {
+    font-size: 16px;
+    padding: 14px 16px;
+  }
 }
 
 /* Order flow (PapersHelm-style) */

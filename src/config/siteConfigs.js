@@ -4,6 +4,10 @@
  * Each variant represents a complete brand/site identity
  */
 
+// Import logo assets
+import tutorsPieLogo from "/images/logotutorspie.png";
+import tutorsPieLogoWhite from "/images/logotutorspiewhite.png";
+
 const siteConfigs = {
   tutorspie: {
     variant: "tutorspie",
@@ -20,8 +24,8 @@ const siteConfigs = {
     },
 
     branding: {
-      logo: "/images/logo.png",
-      logoWhite: "/images/logotutorspiewhite.png",
+      logo: tutorsPieLogo,
+      logoWhite: tutorsPieLogoWhite,
       favicon: "/favicon.ico",
       primaryColor: "#16a34a",
       secondaryColor: "#15803d",

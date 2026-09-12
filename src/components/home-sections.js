@@ -1,4 +1,3 @@
-import HomeHeader from "./sections/home-header";
 import HeroSection from "./sections/hero-section";
 import WritersSection from "./sections/writers-section";
 import BenefitsSection from "./sections/benefits-section";
@@ -10,12 +9,11 @@ import ComparisonSection from "./sections/comparison-section";
 import TrustCta from "./sections/trust-cta";
 import FaqSection from "./sections/faq-section";
 import ServicesSection from "./sections/services-section";
-import HomeFooter from "./sections/home-footer";
 import DisclaimerBar from "./sections/disclaimer-bar";
+
 export default function HomeSections() {
   return (
     <>
-      <HomeHeader />
       <HeroSection />
       <WritersSection />
       <BenefitsSection />
@@ -27,7 +25,6 @@ export default function HomeSections() {
       <TrustCta />
       <FaqSection />
       <ServicesSection />
-      <HomeFooter />
       <DisclaimerBar />
     </>
   );
