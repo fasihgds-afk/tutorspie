@@ -37,15 +37,19 @@ export function useOrder(autoFetch = false) {
     setError("");
     try {
       const created = await orderService.createOrder(orderForm);
+      // Refresh orders list since we created and confirmed a new order
+      if (created) {
+        await fetchOrders();
+      }
       return created;
     } catch (err) {
-      const parsed = parseApiError(err, "Failed to create order.");
+      const parsed = parseApiError(err, "Failed to create and confirm order.");
       setError(parsed);
       throw new Error(parsed);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchOrders]);
 
   const updateDraft = useCallback(async (orderId, changes) => {
     setLoading(true);

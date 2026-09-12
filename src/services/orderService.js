@@ -3,9 +3,18 @@ import { buildBackendOrderPayload, mapBackendOrderToUi } from "@/utils/orderMapp
 
 export const orderService = {
   createOrder: async (orderForm) => {
+    // Step 1: Create order as draft
     const payload = buildBackendOrderPayload(orderForm);
-    const res = await orderApi.createOrder(payload);
-    return res?.data?.order ? mapBackendOrderToUi(res.data.order) : null;
+    const createRes = await orderApi.createOrder(payload);
+    const draftOrder = createRes?.data?.order ? mapBackendOrderToUi(createRes.data.order) : null;
+    
+    if (!draftOrder?.id) {
+      throw new Error("Failed to create order");
+    }
+    
+    // Step 2: Immediately confirm the order to change status to AWAITING_PAYMENT
+    const confirmRes = await orderApi.confirmOrder(draftOrder.id);
+    return confirmRes?.data?.order ? mapBackendOrderToUi(confirmRes.data.order) : draftOrder;
   },
 
   updateDraft: async (orderId, orderFormOrChanges) => {

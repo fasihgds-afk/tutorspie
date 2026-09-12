@@ -137,20 +137,16 @@ export function ConfirmOrderPanel() {
     try {
       let targetOrder = backendOrder;
 
-      // 1. Ensure backend draft exists
+      // 1. Ensure backend order exists (will be auto-confirmed during creation)
       if (!targetOrder?.id) {
         targetOrder = await createOrder(order);
         setBackendOrder(targetOrder);
         setOrderId(targetOrder.orderCode || targetOrder.orderNumber || targetOrder.id);
       }
 
-      // 2. Confirm order on backend (transitions status to awaiting_payment)
-      if (targetOrder.status === "draft") {
-        targetOrder = await confirmOrder(targetOrder.id);
-        setBackendOrder(targetOrder);
-      }
+      // Note: Order is now auto-confirmed during creation, so it should already be "awaiting_payment"
 
-      // 3. Create Stripe PaymentIntent
+      // 2. Create Stripe PaymentIntent
       let intent = null;
       try {
         intent = await createPaymentIntent(targetOrder.id, "stripe");
