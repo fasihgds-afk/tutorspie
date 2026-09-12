@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Search, FileText } from "lucide-react";
 import { ROUTES } from "@/constants/routeConstants";
 import { writePending } from "@/components/order-data";
-import { mapBackendAddOnsToIds } from "@/utils/orderMapper";
+import { isUnpaidOrder, pendingFromBackendOrder } from "@/utils/orderMapper";
 
 export function OrdersTable({ orders, loading, onSelectOrder }) {
   const [query, setQuery] = useState("");
@@ -46,24 +46,7 @@ export function OrdersTable({ orders, loading, onSelectOrder }) {
 
   const handlePayNow = (order) => {
     // Store order info in session storage and redirect to confirm page
-    writePending({
-      backendOrderId: order.id || order._id,
-      orderNumber: order.orderCode || order.orderNumber,
-      typeOfWork: order.assignmentType,
-      academicLevel: order.academicLevel,
-      subject: order.subject,
-      topic: order.title,
-      deadline: order.deadline,
-      pages: order.numberOfPages || 1,
-      lineSpacing: order.lineSpacing === "single" ? "Single Spaced" : "Double Spaced",
-      citation: order.citationStyle,
-      references: order.references || 0,
-      font: order.fontStyle,
-      language: order.language,
-      details: order.guidelines || order.details,
-      expert: "system",
-      addons: mapBackendAddOnsToIds(order.addOns),
-    });
+    writePending(pendingFromBackendOrder(order));
     navigate(ROUTES.ORDER_CONFIRM);
   };
 
@@ -127,16 +110,8 @@ export function OrdersTable({ orders, loading, onSelectOrder }) {
               {filtered.map((o) => {
                 const id = o.id || o._id;
                 const statusStr = String(o.status || "draft").toLowerCase();
-                const needsPayment = statusStr === "draft" || statusStr === "awaiting_payment";
-                
-                // Debug log
-                console.log("Order status check:", {
-                  orderId: id,
-                  originalStatus: o.status,
-                  statusStr,
-                  needsPayment
-                });
-                
+                const needsPayment = isUnpaidOrder(o);
+
                 return (
                   <tr key={id}>
                     <td className="order-id-cell">
@@ -162,7 +137,7 @@ export function OrdersTable({ orders, loading, onSelectOrder }) {
                             .toLowerCase()
                             .replace(/_/g, "-")}`}
                         >
-                          {statusStr.replace(/_/g, " ").toUpperCase()}
+                          {statusStr.replace(/_/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2").toUpperCase()}
                         </span>
                         {needsPayment ? (
                           <button

@@ -16,7 +16,7 @@ export function FooterTutorspie() {
           <div className="col-lg-5 col-12 mb-0 mb-md-4 pb-0 pb-md-2">
             <a href="/">
               <img
-                src="/images/logotutorspiewhite.png"
+                src={siteConfig.branding.logoWhite}
                 alt={siteConfig.name}
                 className="site-logo footer-logo"
               />

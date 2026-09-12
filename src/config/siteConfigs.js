@@ -21,6 +21,7 @@ const siteConfigs = {
 
     branding: {
       logo: "/images/logo.png",
+      logoWhite: "/images/logotutorspiewhite.png",
       favicon: "/favicon.ico",
       primaryColor: "#16a34a",
       secondaryColor: "#15803d",
@@ -97,6 +98,7 @@ const siteConfigs = {
 
     branding: {
       logo: "/images/logo-demo.png",
+      logoWhite: "/images/logo-demo-white.png",
       favicon: "/favicon-demo.ico",
       primaryColor: "#2563eb",
       secondaryColor: "#1d4ed8",

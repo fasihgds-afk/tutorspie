@@ -85,16 +85,41 @@ export function StripePayment({
 }) {
   const hasStripeKey = Boolean(ENV.STRIPE_PUBLISHABLE_KEY && !ENV.STRIPE_PUBLISHABLE_KEY.includes("placeholder"));
 
+  // DEV-ONLY fallback: lets engineers exercise the confirm/pay UI locally without a real
+  // Stripe key. `import.meta.env.DEV` is a build-time constant (false in any production
+  // build), so this can never accidentally activate in prod even if VITE_STRIPE_PUBLISHABLE_KEY
+  // is missing or misconfigured on a deploy. Do NOT change this to a runtime/env-var check —
+  // that was the previous bug: a missing key in production let anyone mark an order "paid"
+  // without a real charge.
+  const allowDevFallback = import.meta.env.DEV;
+
+  if (!hasStripeKey && !allowDevFallback) {
+    return (
+      <div
+        className="stripe-fallback-card"
+        style={{ marginTop: "16px", padding: "16px", background: "rgba(220,38,38,0.08)", borderRadius: "8px", border: "1px solid rgba(220,38,38,0.35)" }}
+      >
+        <strong style={{ color: "#dc2626" }}>Payment is temporarily unavailable</strong>
+        <p style={{ fontSize: "0.85rem", color: "#64748b", marginTop: "8px" }}>
+          We couldn't start a secure checkout for this order. Please try again shortly, or
+          contact support if the problem continues — no charge has been made.
+        </p>
+      </div>
+    );
+  }
+
   // If publishable key is not configured in client environment, display backend intent info
   if (!hasStripeKey || !stripePromise) {
     return (
       <div className="stripe-fallback-card" style={{ marginTop: "16px", padding: "16px", background: "rgba(255,255,255,0.05)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
           <strong>Payment Intent Ready</strong>
-          <span className="draft-status status-awaiting-payment">READY</span>
+          <span className="draft-status status-awaiting-payment">DEV MODE — NO REAL CHARGE</span>
         </div>
         <p style={{ fontSize: "0.85rem", color: "#94a3b8", marginBottom: "12px" }}>
-          Stripe PaymentIntent generated on server for order <b>{orderNumber}</b>.
+          Stripe PaymentIntent generated on server for order <b>{orderNumber}</b>. This
+          bypass is only available in local development builds and simulates a successful
+          payment without moving any money.
         </p>
         <div style={{ fontSize: "0.8rem", color: "#64748b", wordBreak: "break-all", marginBottom: "16px" }}>
           Intent Secret: <code>{clientSecret ? clientSecret.slice(0, 24) + "..." : "Active"}</code>
@@ -104,7 +129,7 @@ export function StripePayment({
           className="btn-solid-brand btn-block"
           onClick={() => onSuccess && onSuccess({ id: clientSecret, status: "succeeded" })}
         >
-          Complete Order &amp; View in Dashboard
+          Simulate Successful Payment (dev only)
         </button>
       </div>
     );

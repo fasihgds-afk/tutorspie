@@ -1,6 +1,29 @@
 import { ENV } from "@/config/env";
 import { ADDON_ID_TO_NAME, ADDON_NAME_TO_ID } from "@/constants/orderConstants";
 
+// Every status string the backend has been observed to send for an order that
+// still needs payment. Compared case-insensitively with underscores/dashes/spaces
+// stripped, so "draft", "Draft", "awaiting_payment", "awaitingPayment",
+// "awaiting-payment", and "awaiting payment" are all treated the same.
+const UNPAID_STATUS_KEYS = new Set(["draft", "awaitingpayment"]);
+
+function normalizeStatusKey(status) {
+  return String(status || "")
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "");
+}
+
+/**
+ * Single source of truth for "does this order still need payment?".
+ * Use this everywhere instead of re-checking `order.status` inline —
+ * previously this check existed independently in four different files
+ * and had drifted (some only matched 2 of 3 real status variants).
+ */
+export function isUnpaidOrder(order) {
+  if (!order) return false;
+  return UNPAID_STATUS_KEYS.has(normalizeStatusKey(order.status));
+}
+
 /**
  * Maps backend add-ons (array of objects or strings) to frontend add-on IDs
  */
@@ -61,6 +84,34 @@ export function buildBackendOrderPayload(order) {
 }
 
 /**
+ * Maps a backend order record into the shape `writePending()` expects for
+ * sessionStorage (the "resume this draft on /order/confirm" flow).
+ * Single source of truth — this object literal used to be copy-pasted with
+ * slightly different fallback values in three separate files.
+ */
+export function pendingFromBackendOrder(backendOrder) {
+  return {
+    backendOrderId: backendOrder.id || backendOrder._id,
+    orderNumber: backendOrder.orderCode || backendOrder.orderNumber,
+    typeOfWork: backendOrder.assignmentType || "Short Essay",
+    academicLevel: backendOrder.academicLevel || "Undergraduate",
+    subject: backendOrder.subject || "History",
+    deadline: backendOrder.deadline || "3 days",
+    pages: backendOrder.numberOfPages || 1,
+    lineSpacing:
+      backendOrder.lineSpacing === "single" ? "Single Spaced" : "Double Spaced",
+    topic: backendOrder.title || "",
+    details: backendOrder.guidelines || "",
+    citation: backendOrder.citationStyle || "Non Specific",
+    references: backendOrder.references || 0,
+    font: backendOrder.fontStyle || "Calibri (Standard)",
+    language: backendOrder.language || "US English",
+    addons: mapBackendAddOnsToIds(backendOrder.addOns),
+    expert: "system",
+  };
+}
+
+/**
  * Normalizes backend order representation for presentation in frontend UI
  */
 export function mapBackendOrderToUi(order) {
@@ -89,4 +140,6 @@ export default {
   buildBackendOrderPayload,
   mapBackendOrderToUi,
   mapBackendAddOnsToIds,
+  isUnpaidOrder,
+  pendingFromBackendOrder,
 };

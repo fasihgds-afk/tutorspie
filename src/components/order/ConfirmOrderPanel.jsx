@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Megaphone } from "lucide-react";
 import { useAuth } from "@/auth/useAuth";
@@ -30,6 +30,8 @@ export function ConfirmOrderPanel() {
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [loadingBackendOrder, setLoadingBackendOrder] = useState(false);
+  // Track which backendOrderId we've already synced to avoid re-fetching on every render
+  const syncedOrderIdRef = useRef(null);
 
   const prices = useMemo(() => {
     if (!order) return null;
@@ -51,16 +53,21 @@ export function ConfirmOrderPanel() {
     }
   }, [navigate]);
 
-  // Synchronize with backend when authenticated
+  // Synchronize with backend when authenticated — runs only once per unique order id
   useEffect(() => {
     if (!ready || !isAuthenticated || !order) return;
+
+    const backendId = order.backendOrderId;
+    // Skip if we already loaded this order
+    if (syncedOrderIdRef.current === (backendId || "__new__")) return;
+    syncedOrderIdRef.current = backendId || "__new__";
 
     let isCurrent = true;
     async function syncBackendOrder() {
       setLoadingBackendOrder(true);
       try {
-        if (order.backendOrderId) {
-          const fresh = await getOrder(order.backendOrderId);
+        if (backendId) {
+          const fresh = await getOrder(backendId);
           if (isCurrent && fresh) {
             setBackendOrder(fresh);
             setOrderId(fresh.orderCode || fresh.orderNumber || fresh.id);
@@ -75,10 +82,14 @@ export function ConfirmOrderPanel() {
               backendOrderId: created.id,
               orderNumber: created.orderCode || created.orderNumber,
             });
+            // Update the ref so we don't re-create on next render
+            syncedOrderIdRef.current = created.id;
           }
         }
       } catch (err) {
         if (isCurrent) {
+          // Reset ref so a retry is possible
+          syncedOrderIdRef.current = null;
           setNotice(parseApiError(err, "Failed to initialize backend order pricing."));
         }
       } finally {
@@ -91,7 +102,7 @@ export function ConfirmOrderPanel() {
     return () => {
       isCurrent = false;
     };
-  }, [ready, isAuthenticated, order]);
+  }, [ready, isAuthenticated, order, getOrder, createOrder]);
 
   useEffect(() => {
     if (

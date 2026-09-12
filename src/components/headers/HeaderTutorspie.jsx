@@ -15,7 +15,7 @@ export function HeaderTutorspie({ user, onLogout, compact = false }) {
   return (
     <header className="site-app-header">
       <Link to={ROUTES.HOME} className="app-logo">
-        <img src="/images/logotutorspie.png" alt={siteConfig.name} />
+        <img src={siteConfig.branding.logo} alt={siteConfig.name} />
       </Link>
       {!compact && (
         <nav className="site-app-nav" aria-label="Main">

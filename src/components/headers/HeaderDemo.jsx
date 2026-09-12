@@ -15,7 +15,7 @@ export function HeaderDemo() {
   return (
     <header className="site-app-header">
       <a href="/" className="app-logo">
-        <img src="/images/logotutorspie.png" alt={siteConfig.name} />
+        <img src={siteConfig.branding.logo} alt={siteConfig.name} />
       </a>
       <nav className="site-app-nav" aria-label="Main">
         {siteConfig.navigation.main.map((link) => (

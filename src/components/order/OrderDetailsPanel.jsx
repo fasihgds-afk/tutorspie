@@ -4,7 +4,7 @@ import { Info, Minus, Plus } from "lucide-react";
 import { useAuth } from "@/auth/useAuth";
 import { useOrder } from "@/hooks/useOrder";
 import { orderService } from "@/services/orderService";
-import { mapBackendAddOnsToIds } from "@/utils/orderMapper";
+import { isUnpaidOrder, pendingFromBackendOrder } from "@/utils/orderMapper";
 import { SiteHeader, SiteFooter } from "@/components/site-account";
 import { OrderStepper } from "./OrderStepper";
 import { OrderSidebar } from "./OrderSidebar";
@@ -130,35 +130,11 @@ export function OrderDetailsPanel() {
         
         async function loadOrderForEdit() {
           try {
-            console.log("Loading order for edit:", editOrderId);
             const orderToEdit = await orderService.getOrder(editOrderId);
             if (!isCurrent || !orderToEdit) return;
-            
-            console.log("Loaded order from API:", orderToEdit);
-            
-            // Map backend add-ons to frontend IDs
-            const mappedAddOns = mapBackendAddOnsToIds(orderToEdit.addOns);
-            console.log("Mapped add-ons:", mappedAddOns);
-            
+
             // Populate form with order data from API
-            setOrder({
-              backendOrderId: orderToEdit.id || orderToEdit._id,
-              orderNumber: orderToEdit.orderCode || orderToEdit.orderNumber,
-              typeOfWork: orderToEdit.assignmentType || "Short Essay",
-              academicLevel: orderToEdit.academicLevel || "Undergraduate",
-              subject: orderToEdit.subject || "History",
-              deadline: orderToEdit.deadline || "3 days",
-              pages: orderToEdit.numberOfPages || 1,
-              lineSpacing: orderToEdit.lineSpacing === "single" ? "Single Spaced" : "Double Spaced",
-              topic: orderToEdit.title || "",
-              details: orderToEdit.guidelines || "",
-              citation: orderToEdit.citationStyle || "Non Specific",
-              references: orderToEdit.references || 0,
-              font: orderToEdit.fontStyle || "Calibri (Standard)",
-              language: orderToEdit.language || "US English",
-              addons: mappedAddOns,
-              expert: "system",
-            });
+            setOrder(pendingFromBackendOrder(orderToEdit));
           } catch (err) {
             console.error("Failed to load order for edit:", err);
             setFormError("Failed to load order. Please try again.");
@@ -191,39 +167,16 @@ export function OrderDetailsPanel() {
         const orders = await orderService.getMyOrders();
         if (!isCurrent) return;
         
-        console.log("OrderDetailsPanel: Checking for unpaid orders", orders);
-        
-        // Find draft or awaiting_payment orders
-        const unpaidOrder = orders?.find(
-          (o) => o.status === "draft" || o.status === "awaiting_payment"
-        );
-        
+        // Find draft/awaiting-payment orders (status check centralized in orderMapper.isUnpaidOrder)
+        const unpaidOrder = orders?.find(isUnpaidOrder);
+
         if (unpaidOrder) {
-          console.log("Found unpaid order in DB, redirecting to confirm page:", unpaidOrder);
           // Redirect to confirm page with existing order
-          writePending({
-            backendOrderId: unpaidOrder.id || unpaidOrder._id,
-            orderNumber: unpaidOrder.orderCode || unpaidOrder.orderNumber,
-            typeOfWork: unpaidOrder.assignmentType || "Short Essay",
-            academicLevel: unpaidOrder.academicLevel || "Undergraduate",
-            subject: unpaidOrder.subject || "History",
-            deadline: unpaidOrder.deadline || "3 days",
-            pages: unpaidOrder.numberOfPages || 1,
-            lineSpacing: unpaidOrder.lineSpacing === "single" ? "Single Spaced" : "Double Spaced",
-            topic: unpaidOrder.title || "",
-            details: unpaidOrder.guidelines || "",
-            citation: unpaidOrder.citationStyle || "Non Specific",
-            references: unpaidOrder.references || 0,
-            font: unpaidOrder.fontStyle || "Calibri (Standard)",
-            language: unpaidOrder.language || "US English",
-            addons: mapBackendAddOnsToIds(unpaidOrder.addOns),
-            expert: "system",
-          });
+          writePending(pendingFromBackendOrder(unpaidOrder));
           navigate(ROUTES.ORDER_CONFIRM, { replace: true });
           return;
         }
         
-        console.log("No unpaid orders found, showing order form");
       } catch (err) {
         console.error("Failed to check existing orders:", err);
       } finally {
@@ -246,16 +199,13 @@ export function OrderDetailsPanel() {
       params.get("deadline") || "",
     ];
     if (fromQuery.some(Boolean)) {
-      console.log("Loading order from query params:", fromQuery);
       setOrder(orderFromHero(fromQuery));
       return;
     }
     
     // Check for hero lead data from home page
     const heroData = readHeroLeadData();
-    console.log("Hero lead data from localStorage:", heroData);
     if (heroData && (heroData.typeOfWork || heroData.academicLevel || heroData.subject || heroData.deadline)) {
-      console.log("Applying hero lead data to order form");
       setOrder((prev) => ({ ...prev, ...heroData }));
       // Clear the data after using it once
       clearHeroLeadData();
@@ -264,7 +214,6 @@ export function OrderDetailsPanel() {
     
     const pending = readPending();
     if (pending) {
-      console.log("Loading pending order from session");
       setOrder(pending);
     }
   }, [params]);

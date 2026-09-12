@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   UserRound,
@@ -26,54 +26,35 @@ import { ROUTES } from "@/constants/routeConstants";
 import { parseApiError } from "@/utils/errorHandler";
 import { orderService } from "@/services/orderService";
 import { writePending } from "@/components/order-data";
-import { mapBackendAddOnsToIds } from "@/utils/orderMapper";
+import { isUnpaidOrder, pendingFromBackendOrder } from "@/utils/orderMapper";
+import { siteConfig } from "@/config/siteConfig";
 
 /**
- * Smart Continue routing — 3 conditions:
+ * Smart routing — used both right after login/signup and from the
+ * "Continue" button on the already-logged-in screen. 3 conditions:
  *  1. No orders ever              → /order          (create new order)
- *  2. Has draft/awaiting_payment  → /order/confirm   (complete payment)
+ *  2. Has draft/awaiting-payment  → /order/confirm   (complete payment)
  *  3. Has paid/completed orders   → /account         (view dashboard)
+ *
+ * `isResolvingRef` is a per-component useRef (not module state) so two
+ * different AuthPanel instances — or a fast unmount/remount — can't step
+ * on each other's in-flight guard.
  */
-let isResolvingRoute = false; // Prevent duplicate calls
+async function resolveSmartRoute(navigate, isResolvingRef, setRouting) {
+  if (isResolvingRef.current) return;
 
-async function resolveSmartRoute(navigate, setRouting) {
-  if (isResolvingRoute) {
-    console.log("Already resolving route, skipping...");
-    return;
-  }
-  
-  isResolvingRoute = true;
+  isResolvingRef.current = true;
   setRouting(true);
-  
+
   try {
     const orders = await orderService.getMyOrders();
     if (!orders || orders.length === 0) {
       navigate(ROUTES.ORDER);
       return;
     }
-    const unpaid = orders.find(
-      (o) => o.status === "draft" || o.status === "awaiting_payment",
-    );
+    const unpaid = orders.find(isUnpaidOrder);
     if (unpaid) {
-      writePending({
-        backendOrderId: unpaid.id,
-        orderNumber: unpaid.orderCode || unpaid.orderNumber,
-        typeOfWork: unpaid.assignmentType || "Short Essay",
-        academicLevel: unpaid.academicLevel || "Undergraduate",
-        subject: unpaid.subject || "History",
-        deadline: unpaid.deadline || "3 days",
-        pages: unpaid.numberOfPages || 1,
-        lineSpacing:
-          unpaid.lineSpacing === "single" ? "Single Spaced" : "Double Spaced",
-        topic: unpaid.title || "",
-        details: unpaid.guidelines || "",
-        citation: unpaid.citationStyle || "Non Specific",
-        references: unpaid.references || 0,
-        font: unpaid.fontStyle || "Calibri (Standard)",
-        language: unpaid.language || "US English",
-        addons: mapBackendAddOnsToIds(unpaid.addOns),
-        expert: "system",
-      });
+      writePending(pendingFromBackendOrder(unpaid));
       navigate(ROUTES.ORDER_CONFIRM);
       return;
     }
@@ -82,7 +63,7 @@ async function resolveSmartRoute(navigate, setRouting) {
     navigate(ROUTES.ACCOUNT);
   } finally {
     setRouting(false);
-    isResolvingRoute = false;
+    isResolvingRef.current = false;
   }
 }
 
@@ -172,6 +153,7 @@ export function AuthPanel({ initialSignup = false, account }) {
   const [showPassword, setShowPassword] = useState(false);
   const [routing, setRouting] = useState(false);
   const [justLoggedIn, setJustLoggedIn] = useState(false);
+  const isResolvingRef = useRef(false);
 
   // If user is already authenticated — show session-active screen (handled below),
   // no auto-redirect so they can choose Continue or Logout.
@@ -181,7 +163,7 @@ export function AuthPanel({ initialSignup = false, account }) {
 
   function handleContinue() {
     if (routing) return;
-    resolveSmartRoute(navigate, setRouting);
+    resolveSmartRoute(navigate, isResolvingRef, setRouting);
   }
 
   function handleLogout() {
@@ -237,58 +219,10 @@ export function AuthPanel({ initialSignup = false, account }) {
         return;
       }
       
-      // Smart routing: check for existing orders (only once)
-      console.log("Login successful, checking for existing orders...");
-      try {
-        const orders = await orderService.getMyOrders();
-        console.log("Found orders:", orders?.length || 0);
-        
-        if (!orders || orders.length === 0) {
-          // No orders - go to order page to create one
-          console.log("No orders found, redirecting to /order");
-          navigate(ROUTES.ORDER);
-          return;
-        }
-        
-        // Check for unpaid orders
-        const unpaid = orders.find(
-          (o) => o.status === "draft" || o.status === "awaiting_payment"
-        );
-        
-        if (unpaid) {
-          // Has unpaid order - redirect to confirm page
-          console.log("Found unpaid order, redirecting to /order/confirm");
-          writePending({
-            backendOrderId: unpaid.id,
-            orderNumber: unpaid.orderCode || unpaid.orderNumber,
-            typeOfWork: unpaid.assignmentType || "Short Essay",
-            academicLevel: unpaid.academicLevel || "Undergraduate",
-            subject: unpaid.subject || "History",
-            deadline: unpaid.deadline || "3 days",
-            pages: unpaid.numberOfPages || 1,
-            lineSpacing:
-              unpaid.lineSpacing === "single" ? "Single Spaced" : "Double Spaced",
-            topic: unpaid.title || "",
-            details: unpaid.guidelines || "",
-            citation: unpaid.citationStyle || "Non Specific",
-            references: unpaid.references || 0,
-            font: unpaid.fontStyle || "Calibri (Standard)",
-            language: unpaid.language || "US English",
-            addons: mapBackendAddOnsToIds(unpaid.addOns),
-            expert: "system",
-          });
-          navigate(ROUTES.ORDER_CONFIRM);
-          return;
-        }
-        
-        // Has paid/completed orders - go to dashboard
-        console.log("Has paid orders, redirecting to /account");
-        navigate(ROUTES.ACCOUNT);
-      } catch (routingErr) {
-        // If routing logic fails, default to account page
-        console.error("Smart routing failed:", routingErr);
-        navigate(ROUTES.ACCOUNT);
-      }
+      // Smart routing: check for existing orders and route accordingly.
+      // Shared with the "Continue" button on the session-active screen below —
+      // see resolveSmartRoute() at the top of this file.
+      await resolveSmartRoute(navigate, isResolvingRef, setRouting);
     } catch (err) {
       setError(parseApiError(err, "Unable to authenticate. Please check your details."));
       setJustLoggedIn(false);
@@ -371,7 +305,7 @@ export function AuthPanel({ initialSignup = false, account }) {
 
               {/* Green header */}
               <div style={{
-                background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                background: `linear-gradient(135deg, ${siteConfig.branding.primaryColor} 0%, ${siteConfig.branding.secondaryColor} 100%)`,
                 padding: "28px 32px 22px",
                 textAlign: "center",
               }}>
@@ -418,7 +352,7 @@ export function AuthPanel({ initialSignup = false, account }) {
                   gap: "10px",
                   alignItems: "flex-start",
                 }}>
-                  <CheckCircle size={17} color="#16a34a" style={{ flexShrink: 0, marginTop: "2px" }} />
+                  <CheckCircle size={17} color={siteConfig.branding.primaryColor} style={{ flexShrink: 0, marginTop: "2px" }} />
                   <p style={{ margin: 0, fontSize: "0.84rem", color: "#166534", lineHeight: 1.55 }}>
                     <strong>You are already logged in.</strong> Click <em>Continue</em> to go
                     where you left off, or log out to switch accounts.

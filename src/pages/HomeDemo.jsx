@@ -1,8 +1,6 @@
 import { useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import HomeSectionsDemo from "@/components/home-sections-demo";
-import HeaderDemo from "@/components/headers/HeaderDemo";
-import FooterDemo from "@/components/footers/FooterDemo";
 
 /**
  * Home Page for Demo Site Variant
@@ -74,7 +72,6 @@ export default function HomeDemo() {
       <a className="skip-link" href="#home">
         Skip to content
       </a>
-      <HeaderDemo />
       <div
         ref={root}
         onClick={click}
@@ -82,7 +79,6 @@ export default function HomeDemo() {
       >
         <HomeSectionsDemo />
       </div>
-      <FooterDemo />
       <Link
         className="support-fab"
         to="/contact"

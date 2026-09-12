@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Phone, LogOut } from "lucide-react";
-import { SITE_CONFIG } from "@/config/siteConfig";
+import { SITE_CONFIG, siteConfig } from "@/config/siteConfig";
 import { ROUTES } from "@/constants/routeConstants";
 
 function navActive(pathname, href) {
@@ -15,7 +15,7 @@ export function SiteHeader({ user, onLogout, compact = false }) {
   return (
     <header className="site-app-header">
       <Link to={ROUTES.HOME} className="app-logo">
-        <img src="/images/logotutorspie.png" alt={SITE_CONFIG.NAME} />
+        <img src={siteConfig.branding.logo} alt={SITE_CONFIG.NAME} />
       </Link>
       {!compact && (
         <nav className="site-app-nav" aria-label="Main">
@@ -71,7 +71,7 @@ export function SiteFooter({ compact = false }) {
         <>
           <Link to={ROUTES.HOME}>
             <img
-              src="/images/logotutorspiewhite.png"
+              src={siteConfig.branding.logoWhite}
               alt={SITE_CONFIG.NAME}
               className="footer-logo"
             />

@@ -32,7 +32,7 @@ export function useOrder(autoFetch = false) {
     }
   }, [autoFetch, isAuthenticated, fetchOrders]);
 
-  const createOrder = async (orderForm) => {
+  const createOrder = useCallback(async (orderForm) => {
     setLoading(true);
     setError("");
     try {
@@ -45,9 +45,9 @@ export function useOrder(autoFetch = false) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const updateDraft = async (orderId, changes) => {
+  const updateDraft = useCallback(async (orderId, changes) => {
     setLoading(true);
     setError("");
     try {
@@ -60,9 +60,9 @@ export function useOrder(autoFetch = false) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const confirmOrder = async (orderId) => {
+  const confirmOrder = useCallback(async (orderId) => {
     setLoading(true);
     setError("");
     try {
@@ -75,15 +75,15 @@ export function useOrder(autoFetch = false) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const getOrder = async (orderId) => {
+  const getOrder = useCallback(async (orderId) => {
     try {
       return await orderService.getOrder(orderId);
     } catch (err) {
       throw new Error(parseApiError(err, "Failed to retrieve order."));
     }
-  };
+  }, []);
 
   return {
     orders,

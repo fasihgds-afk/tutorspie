@@ -3,6 +3,7 @@ import { AuthProvider } from "./auth/AuthProvider";
 import { ProtectedRoute } from "./auth/authGuard";
 import { ROUTES } from "./constants/routeConstants";
 import { seoRoutes } from "./config/seoRoutes";
+import SiteLayout from "./layouts/SiteLayout";
 
 import HomePage from "./pages/HomePage";
 import SeoPage from "./pages/SeoPage";
@@ -19,31 +20,30 @@ export default function App() {
   return (
     <AuthProvider>
       <Routes>
-        {/* Main Homepage (uses site config) */}
-        <Route path={ROUTES.HOME} element={<HomePage />} />
+        {/* ── Marketing layout ───────────────────────────────────────────────
+            SiteLayout renders the correct header + <Outlet /> + footer once,
+            based on siteConfig.variant. Pages inside must NOT render their
+            own header/footer. */}
+        <Route element={<SiteLayout />}>
+          <Route path={ROUTES.HOME} element={<HomePage />} />
+          <Route path={ROUTES.CONTACT} element={<ContactPage />} />
+          <Route path={ROUTES.PRIVACY} element={<PrivacyPage />} />
+          <Route path={ROUTES.TERMS} element={<TermsPage />} />
 
-        {/* Dynamic SEO Routes (configured in seoRoutes.js) */}
-        {seoRoutes
-          .filter(route => route.path !== "/") // Exclude main homepage
-          .map(route => (
-            <Route 
-              key={route.path} 
-              path={route.path} 
-              element={<SeoPage />} 
-            />
-          ))
-        }
+          {/* Dynamic SEO routes (configured in seoRoutes.js) */}
+          {seoRoutes
+            .filter((route) => route.path !== "/") // Exclude main homepage
+            .map((route) => (
+              <Route key={route.path} path={route.path} element={<SeoPage />} />
+            ))}
+        </Route>
 
-        {/* Public Marketing & Legal Routes */}
-        <Route path={ROUTES.CONTACT} element={<ContactPage />} />
-        <Route path={ROUTES.PRIVACY} element={<PrivacyPage />} />
-        <Route path={ROUTES.TERMS} element={<TermsPage />} />
-
-        {/* Auth Routes — AuthPanel handles session-active state internally */}
+        {/* ── Compact-header routes ──────────────────────────────────────────
+            AuthPanel / DashboardPanel / OrderDetailsPanel / ConfirmOrderPanel
+            each self-contain <SiteHeader compact /> + <SiteFooter compact />.
+            Kept outside SiteLayout to avoid a double header. */}
         <Route path={ROUTES.LOGIN} element={<LoginPage />} />
         <Route path={ROUTES.SIGNUP} element={<SignupPage />} />
-
-        {/* Protected Student Routes */}
         <Route
           path={ROUTES.ACCOUNT}
           element={

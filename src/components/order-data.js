@@ -141,43 +141,11 @@ export function priceBreakdown(order, backendPricing) {
   };
 }
 
-export function buildBackendOrderPayload(order) {
-  const spacing = String(order.lineSpacing || "")
-    .toLowerCase()
-    .includes("single")
-    ? "single"
-    : "double";
-  const pages = Math.max(1, Number(order.pages) || 1);
-  const calculatedWords = pages * (spacing === "single" ? 550 : 275);
-  const selectedAddOns = (order.addons || []).map(
-    (id) => ADDON_ID_TO_NAME[id] || id,
-  );
-  
-  // Extract deadline period from full label (e.g., "15 days / Sep 10, 2026" -> "15 days")
-  const extractDeadline = (fullDeadline) => {
-    if (!fullDeadline) return "3 days";
-    const match = fullDeadline.match(/^([\d]+\s+(days|hours))/i);
-    return match ? match[1] : fullDeadline.split("/")[0].trim();
-  };
-
-  return {
-    tag: import.meta.env.VITE_SITE_TAG || "tutorspath",
-    assignmentType: order.typeOfWork || "Short Essay",
-    academicLevel: order.academicLevel || "Undergraduate",
-    subject: order.subject || "History",
-    title: (order.topic || "Writing Project").trim(),
-    deadline: extractDeadline(order.deadline),
-    numberOfPages: pages,
-    wordCount: calculatedWords,
-    lineSpacing: spacing,
-    guidelines: (order.details || "").trim(),
-    citationStyle: order.citation || "Non Specific",
-    references: Math.max(0, Number(order.references) || 0),
-    fontStyle: order.font || "Calibri (Standard)",
-    language: order.language || "US English",
-    addOns: selectedAddOns,
-  };
-}
+// NOTE: buildBackendOrderPayload used to be duplicated here. The real
+// implementation used by orderService.js lives in utils/orderMapper.js —
+// re-export it from there instead of maintaining a second copy that can
+// silently drift out of sync.
+export { buildBackendOrderPayload } from "@/utils/orderMapper";
 
 export function readPending() {
   try {
